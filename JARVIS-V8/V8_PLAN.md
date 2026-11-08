@@ -86,7 +86,8 @@ Not implemented in this tier:
 | Gemini Screen Guide request | **Mocked HTTP only**: payload shape, JSON schema, no tools, no memory writes, 429/network/empty-response messages. **No live API call made.** | `tests/test_screen_guide.py` |
 | Real Windows UIA | **Not run.** No Windows host was available. The UIA backend is exercised only through a fake tree. | — |
 | Windows CI (first push) | Run #1 failed: 7 inherited tests could not delete temp profiles because SQLite connections were never closed (`with sqlite3.connect()` does not close). Fixed in `core/db.py`; unclosed-connection warnings went from 35 to 0; regression test `tests/test_storage_handles.py`. | GitHub Actions |
-| Windows packaging / install | **Not run** locally. CI workflow `build-jarvis-v8.yml` runs tests, the benchmark, PyInstaller and Inno Setup on `windows-latest` when pushed. | GitHub Actions |
+| Windows CI (after fix) | Run #3 **passed** on `windows-latest`: full test suite, benchmark, `pip check`, PyInstaller build, Inno Setup installer, prerelease `v8.0.0-alpha.1` published with `JARVIS-V8-Setup.exe`. | GitHub Actions |
+| Install/uninstall on a real PC | **Not run.** CI builds the installer but does not install it, run Screen Guide against real apps, or test V7+V8 side by side. | — |
 
 Known platform limits:
 - `pyautogui` needs `--no-build-isolation` on some Linux pip setups. Qt needs `libegl1`, `libgl1`, `libxkbcommon0`, `libfontconfig1` and `libdbus-1-3` on headless Linux.
