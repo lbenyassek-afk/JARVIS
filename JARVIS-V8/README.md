@@ -32,6 +32,22 @@ with an earlier generation.
 exists yet. A future import must be explicit, show what it will copy, and
 re-encrypt with the V8 key.
 
+## Screen Guide (new in V8)
+
+Open **GUIDE** in the left rail. Describe what you want to do, pick an open
+window, press **INSPECT WINDOW**, then **GET GUIDANCE**.
+
+- Reads Windows accessibility names and control types only. No screenshots,
+  OCR or field contents. Observations stay in memory.
+- Never clicks or types. Desktop Control remains the reviewed action path.
+- Steps are marked **✓ observed** or **⚠ not observed** against the captured controls.
+- Windows that expose no controls are reported as unsupported, with no guessing.
+- Gemini is used only when you tick the per-request sharing box. **PREVIEW SHARED
+  DATA** shows exactly what is sent. Otherwise guidance is a local keyword match.
+- Settings → Screen Guide: enable, sharing policy, control limit, reset.
+
+Full status, evidence and limits: [V8_PLAN.md](V8_PLAN.md).
+
 ## Inherited V7 foundation
 
 ### V6/V7 target

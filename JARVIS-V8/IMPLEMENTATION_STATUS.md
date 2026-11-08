@@ -1,4 +1,15 @@
-# V6 implementation status
+# Implementation status
+
+## V8 — 8 November 2026
+
+- Independent V8 identity (profile, Credential Manager, exe, installer,
+  backups, updates, companion port) centralized in `core/identity.py`.
+- Read-only Screen Guide page with grounded guidance and per-request cloud consent.
+- 100/100 tests and 8/8 benchmarks on Linux offscreen. Windows UIA, packaging and
+  live Gemini calls not yet verified. See `V8_PLAN.md`.
+
+The sections below describe the inherited V6/V7 foundation.
+
 
 ## Reliability architecture upgrade — 5 November 2026
 
