@@ -1,12 +1,12 @@
-name: Build JARVIS V6 Windows Installer
+name: Build JARVIS V8 Windows Installer
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - "JARVIS-V6/**"
-      - ".github/workflows/build-jarvis-v6.yml"
+      - "JARVIS-V8/**"
+      - ".github/workflows/build-jarvis-v8.yml"
 
 permissions:
   contents: write
@@ -23,30 +23,30 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-          cache-dependency-path: JARVIS-V6/requirements.txt
+          cache-dependency-path: JARVIS-V8/requirements.txt
 
       - name: Install Python dependencies
-        working-directory: JARVIS-V6
+        working-directory: JARVIS-V8
         run: python -m pip install -r requirements.txt
 
-      - name: Test V6
-        working-directory: JARVIS-V6
+      - name: Test V8
+        working-directory: JARVIS-V8
         run: python -m unittest discover -s tests -v
 
       - name: Run offline reliability benchmark
-        working-directory: JARVIS-V6
+        working-directory: JARVIS-V8
         run: python benchmark.py
 
       - name: Validate installed dependencies
-        working-directory: JARVIS-V6
+        working-directory: JARVIS-V8
         run: python -m pip check
 
       - name: Build the windowed application
-        working-directory: JARVIS-V6
+        working-directory: JARVIS-V8
         shell: pwsh
         run: |
           python -m PyInstaller --noconfirm --clean --windowed `
-            --name "JARVIS V6" --icon jarvis.ico --version-file version_info.txt `
+            --name "JARVIS V8" --icon jarvis.ico --version-file version_info.txt `
             --add-data "core/prompt.txt;core" --add-data "core/manager_prompt.txt;core" `
             --add-data "jarvis.ico;." --add-data "skills;skills" `
             --hidden-import PyQt6.QtTextToSpeech --hidden-import PyQt6.QtMultimedia `
@@ -62,13 +62,13 @@ jobs:
           if (-not (Test-Path $iscc)) {
             choco install innosetup --no-progress -y
           }
-          & $iscc "JARVIS-V6\installer.iss"
+          & $iscc "JARVIS-V8\installer.iss"
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-V6-Windows-Setup
-          path: JARVIS-V6/release/JARVIS-V6-Setup.exe
+          name: JARVIS-V8-Windows-Setup
+          path: JARVIS-V8/release/JARVIS-V8-Setup.exe
           if-no-files-found: error
 
       - name: Publish latest installer release
@@ -76,13 +76,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v6.0.0-alpha.1 *> $null
+          gh release view v8.0.0-alpha.1 *> $null
           if ($LASTEXITCODE -eq 0) {
-            gh release delete v6.0.0-alpha.1 --cleanup-tag --yes
+            gh release delete v8.0.0-alpha.1 --cleanup-tag --yes
           }
-          gh release create v6.0.0-alpha.1 `
-            "JARVIS-V6/release/JARVIS-V6-Setup.exe" `
+          gh release create v8.0.0-alpha.1 `
+            "JARVIS-V8/release/JARVIS-V8-Setup.exe" `
             --target "$env:GITHUB_SHA" `
-            --title "JARVIS V6 Alpha 1 — Reliability Foundation" `
+            --title "JARVIS V8 Alpha 1 — Independent identity and Screen Guide" `
             --prerelease `
-            --notes "Created by Reda Benyassek. First private V6 foundation build. Not yet the stable V6 release."
+            --notes "Created by Reda Benyassek. First private V8 build on the V7 foundation. Not a stable release."

@@ -12,6 +12,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from .config import load_config
+from .identity import USER_AGENT
 from .conversation import relevant_messages, remember_exchange
 from .prompt import system_messages
 from .secrets import get_secret
@@ -94,7 +95,7 @@ def _network_error(exc: Exception) -> str:
     if isinstance(exc, requests.exceptions.SSLError):
         return ("Gemini's secure connection failed. Check that Windows date and time are correct, "
                 "then check antivirus HTTPS scanning.")
-    return ("Cannot reach Google Gemini. Check the internet connection and allow JARVIS V6 "
+    return ("Cannot reach Google Gemini. Check the internet connection and allow JARVIS V8 "
             "through Windows Firewall or antivirus.")
 
 
@@ -124,7 +125,7 @@ def inspect_gemini_connection(key: str, verify_generation: bool = True) -> dict:
         response = requests.get(
             "https://generativelanguage.googleapis.com/v1beta/models",
             params={"key": key, "pageSize": 100},
-            headers={"User-Agent": "JARVIS-V6/6.0"}, timeout=(12, 60),
+            headers={"User-Agent": USER_AGENT}, timeout=(12, 60),
         )
     except requests.RequestException as exc:
         raise LLMError(_network_error(exc)) from exc
@@ -150,7 +151,7 @@ def inspect_gemini_connection(key: str, verify_generation: bool = True) -> dict:
         try:
             generated = requests.post(
                 f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-                params={"key": key}, headers={"User-Agent": "JARVIS-V6/6.0"},
+                params={"key": key}, headers={"User-Agent": USER_AGENT},
                 json={"contents": [{"role": "user", "parts": [{"text": "Reply with exactly: CONNECTED"}]}],
                       "generationConfig": {"temperature": 0, "maxOutputTokens": 12}},
                 timeout=(12, 60),

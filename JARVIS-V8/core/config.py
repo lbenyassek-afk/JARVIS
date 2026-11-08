@@ -5,8 +5,10 @@ import os
 from copy import deepcopy
 from pathlib import Path
 
+from . import identity
 
-APP_DIR = Path(os.getenv("APPDATA", Path.home())) / "JARVIS-V6"
+
+APP_DIR = Path(os.getenv("APPDATA", Path.home())) / identity.PROFILE_DIR_NAME
 CONFIG_PATH = APP_DIR / "config.json"
 
 DEFAULTS = {
@@ -132,13 +134,13 @@ DEFAULTS = {
         "enabled": False,
         "connection_mode": "local",
         "bind": "127.0.0.1",
-        "port": 8765,
+        "port": identity.COMPANION_PORT,
         "remote_relay": False,
     },
     "updates": {
         "automatic_check": True,
         "channel": "stable",
-        "repository": "lbenyassek-afk/JARVIS-V6",
+        "repository": identity.UPDATE_REPOSITORY,
     },
     "privacy": {
         "store_audio": False,

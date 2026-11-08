@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+from core.identity import APP_NAME, APP_SLUG, BACKUP_SUFFIX
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
@@ -23,7 +24,7 @@ from core.workspace import records, save
 class CommandPalette(QDialog):
     def __init__(self, actions: dict[str, callable], parent=None):
         super().__init__(parent); self.actions = actions
-        self.setWindowTitle("JARVIS V6 // COMMAND PALETTE"); self.resize(560, 520)
+        self.setWindowTitle(APP_NAME + " // COMMAND PALETTE"); self.resize(560, 520)
         layout = QVBoxLayout(self)
         self.search = QLineEdit(); self.search.setPlaceholderText("Search commands…")
         self.list = QListWidget(); layout.addWidget(self.search); layout.addWidget(self.list, 1)
@@ -47,7 +48,7 @@ class CommandPalette(QDialog):
 class DiagnosticsDialog(QDialog):
     def __init__(self, registry, parent=None):
         super().__init__(parent); self.registry = registry
-        self.setWindowTitle("JARVIS V6 // SYSTEM DIAGNOSTICS"); self.resize(720, 520)
+        self.setWindowTitle(APP_NAME + " // SYSTEM DIAGNOSTICS"); self.resize(720, 520)
         layout = QVBoxLayout(self)
         title = QLabel("FIRST-RUN AND SYSTEM HEALTH"); title.setObjectName("section"); layout.addWidget(title)
         self.list = QListWidget(); layout.addWidget(self.list, 1)
@@ -67,7 +68,7 @@ class DiagnosticsDialog(QDialog):
 class PermissionsDialog(QDialog):
     def __init__(self, registry, parent=None):
         super().__init__(parent); self.registry = registry
-        self.setWindowTitle("JARVIS V6 // APPLICATION PERMISSIONS"); self.resize(820, 600)
+        self.setWindowTitle(APP_NAME + " // APPLICATION PERMISSIONS"); self.resize(820, 600)
         layout = QVBoxLayout(self)
         info = QLabel("Sensitive mouse, keyboard, file and private-data actions are permanently locked to Always ask. Configure low-risk actions below.")
         info.setWordWrap(True); layout.addWidget(info)
@@ -114,7 +115,7 @@ class PermissionsDialog(QDialog):
 class TodayDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent); self.remaining = 0
-        self.setWindowTitle("JARVIS V6 // TODAY + FOCUS"); self.resize(760, 620)
+        self.setWindowTitle(APP_NAME + " // TODAY + FOCUS"); self.resize(760, 620)
         layout = QVBoxLayout(self)
         self.clock = QLabel("00:00"); self.clock.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.clock.setStyleSheet("font-size:42px;font-weight:600;letter-spacing:4px")
@@ -163,7 +164,7 @@ class TodayDialog(QDialog):
 
 class BackupDialog(QDialog):
     def __init__(self, parent=None):
-        super().__init__(parent); self.setWindowTitle("JARVIS V6 // ENCRYPTED BACKUP"); self.resize(620, 330)
+        super().__init__(parent); self.setWindowTitle(APP_NAME + " // ENCRYPTED BACKUP"); self.resize(620, 330)
         layout = QVBoxLayout(self); form = QFormLayout(); layout.addLayout(form)
         self.password = QLineEdit(); self.password.setEchoMode(QLineEdit.EchoMode.Password)
         self.confirm = QLineEdit(); self.confirm.setEchoMode(QLineEdit.EchoMode.Password)
@@ -175,8 +176,8 @@ class BackupDialog(QDialog):
 
     def create(self):
         if self.password.text() != self.confirm.text(): QMessageBox.warning(self, "Passwords differ", "Enter the same password twice."); return
-        default = Path.home() / "Documents" / "JARVIS Backups" / f"JARVIS-V6-{datetime.now():%Y%m%d-%H%M}.j6backup"
-        selected, _ = QFileDialog.getSaveFileName(self, "Save encrypted backup", str(default), "JARVIS backup (*.j6backup)")
+        default = Path.home() / "Documents" / "JARVIS Backups" / f"{APP_SLUG}-{datetime.now():%Y%m%d-%H%M}{BACKUP_SUFFIX}"
+        selected, _ = QFileDialog.getSaveFileName(self, "Save encrypted backup", str(default), f"JARVIS backup (*{BACKUP_SUFFIX})")
         if not selected: return
         try: path = backup.create(Path(selected), self.password.text())
         except ValueError as exc: QMessageBox.warning(self, "Backup not created", str(exc)); return
@@ -185,7 +186,7 @@ class BackupDialog(QDialog):
 
 class PerformanceDialog(QDialog):
     def __init__(self, parent=None):
-        super().__init__(parent); self.setWindowTitle("JARVIS V6 // PERFORMANCE"); self.resize(680, 480)
+        super().__init__(parent); self.setWindowTitle(APP_NAME + " // PERFORMANCE"); self.resize(680, 480)
         layout = QVBoxLayout(self); self.list = QListWidget(); layout.addWidget(self.list)
         row = QHBoxLayout()
         refresh = QPushButton("REFRESH LATENCY"); refresh.clicked.connect(self.refresh)
@@ -212,7 +213,7 @@ class PerformanceDialog(QDialog):
 
 class ActivityDialog(QDialog):
     def __init__(self, parent=None):
-        super().__init__(parent); self.setWindowTitle("JARVIS V6 // SENSITIVE ACTIVITY"); self.resize(760, 520)
+        super().__init__(parent); self.setWindowTitle(APP_NAME + " // SENSITIVE ACTIVITY"); self.resize(760, 520)
         layout = QVBoxLayout(self); listing = QListWidget(); layout.addWidget(listing)
         rows = recent_actions(100)
         if not rows: listing.addItem("No sensitive desktop actions recorded.")

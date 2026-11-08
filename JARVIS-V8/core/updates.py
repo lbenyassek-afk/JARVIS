@@ -5,9 +5,10 @@ import re
 import requests
 
 from .config import load_config
+from .identity import UPDATE_REPOSITORY, VERSION
 
 
-CURRENT_VERSION = "6.0.0"
+CURRENT_VERSION = VERSION
 
 
 def _version(value: str) -> tuple[int, int, int]:
@@ -17,7 +18,7 @@ def _version(value: str) -> tuple[int, int, int]:
 
 def check() -> dict:
     cfg = load_config().get("updates", {})
-    repository = str(cfg.get("repository", "lbenyassek-afk/JARVIS-V6"))
+    repository = str(cfg.get("repository", UPDATE_REPOSITORY))
     channel = str(cfg.get("channel", "stable"))
     url = f"https://api.github.com/repos/{repository}/releases"
     response = requests.get(url, timeout=(5, 12), headers={"Accept": "application/vnd.github+json"})

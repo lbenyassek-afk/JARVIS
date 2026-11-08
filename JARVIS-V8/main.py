@@ -6,15 +6,16 @@ from pathlib import Path
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 
+from core.identity import APP_NAME, CREATOR as APP_CREATOR
 from ui.main_window import MainWindow
 
-CREATOR = "Reda Benyassek"
+CREATOR = APP_CREATOR
 
 def main() -> int:
     app = QApplication(sys.argv)
-    app.setApplicationName("JARVIS V6")
+    app.setApplicationName(APP_NAME)
     app.setOrganizationName(CREATOR)
-    app.setApplicationDisplayName("JARVIS V6")
+    app.setApplicationDisplayName(APP_NAME)
     resource_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
     icon_path = resource_root / "jarvis.ico"
     if icon_path.exists():

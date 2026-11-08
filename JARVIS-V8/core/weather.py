@@ -6,6 +6,7 @@ import time
 import requests
 
 from .config import load_config
+from .identity import USER_AGENT
 from .language import normalize_language
 
 
@@ -46,7 +47,7 @@ _CONDITIONS = {
 
 def _json(url: str, params: dict | None = None) -> dict:
     try:
-        response = requests.get(url, params=params, timeout=(4, 9), headers={"User-Agent": "JARVIS-V6"})
+        response = requests.get(url, params=params, timeout=(4, 9), headers={"User-Agent": USER_AGENT})
         response.raise_for_status()
         value = response.json()
     except (requests.RequestException, ValueError) as exc:

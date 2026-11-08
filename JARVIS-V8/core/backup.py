@@ -11,10 +11,11 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from . import config
+from .identity import APP_NAME
 from .secrets import get_secret
 
 
-MAGIC = b"JARVIS6-BACKUP\x00"
+MAGIC = b"JARVIS8-BACKUP\x00"
 
 
 def _derive(password: str, salt: bytes) -> bytes:
@@ -31,7 +32,7 @@ def create(destination: Path, password: str) -> Path:
              "custom_instructions.txt", "manager_prompt.txt")
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("manifest.json", json.dumps({"format": 1, "application": "JARVIS V6"}))
+        archive.writestr("manifest.json", json.dumps({"format": 1, "application": APP_NAME}))
         for name in files:
             path = config.APP_DIR / name
             if path.is_file():
@@ -52,7 +53,7 @@ def create(destination: Path, password: str) -> Path:
 def inspect(path: Path, password: str) -> list[str]:
     raw = Path(path).read_bytes()
     if not raw.startswith(MAGIC):
-        raise ValueError("This is not a JARVIS V6 encrypted backup.")
+        raise ValueError(f"This is not a {APP_NAME} encrypted backup.")
     offset = len(MAGIC); salt = raw[offset:offset + 16]; nonce = raw[offset + 16:offset + 28]
     try:
         clear = AESGCM(_derive(password, salt)).decrypt(nonce, raw[offset + 28:], MAGIC)

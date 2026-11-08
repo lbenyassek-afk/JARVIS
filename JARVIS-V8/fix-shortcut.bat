@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-title JARVIS V6 Shortcut Repair
+title JARVIS V8 Shortcut Repair
 py install.py --shortcut-only
 if errorlevel 1 (
   echo.

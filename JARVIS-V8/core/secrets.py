@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-SERVICE = "JARVIS-V6"
+from .identity import CREDENTIAL_SERVICE
+
+SERVICE = CREDENTIAL_SERVICE
 ALLOWED = {"gemini_api_key", "memory_encryption_key", "companion_token"}
 
 

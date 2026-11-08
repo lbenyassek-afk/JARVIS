@@ -38,7 +38,7 @@ def _require_windows():
     try:
         from pywinauto import Desktop
     except ImportError as exc:
-        raise RuntimeError("Windows app-awareness is not installed. Reinstall JARVIS V6.") from exc
+        raise RuntimeError("Windows app-awareness is not installed. Reinstall JARVIS V8.") from exc
     return Desktop(backend="uia")
 
 

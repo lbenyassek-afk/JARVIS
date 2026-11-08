@@ -60,8 +60,8 @@ class V6Tests(unittest.TestCase):
             raw = (Path(tmp) / 'workspace.sqlite3').read_bytes()
             self.assertNotIn(b'Study chapter one', raw)
             with self.assertRaises(ValueError): workspace.save('Projects','password','secret')
-    def test_profile_is_v6(self):
-        self.assertEqual(config.APP_DIR.name,'JARVIS-V6')
+    def test_profile_is_v8(self):
+        self.assertEqual(config.APP_DIR.name,'JARVIS-V8')
         self.assertEqual(config.DEFAULTS['interface']['visual_mode'], 'orb')
         self.assertEqual(config.DEFAULTS['interface']['presence_profile_version'], 1)
 

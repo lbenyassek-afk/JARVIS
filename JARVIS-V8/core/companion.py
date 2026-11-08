@@ -8,6 +8,7 @@ import threading
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+from .identity import APP_NAME, APP_SLUG, COMPANION_PORT
 from .secrets import get_secret, set_secret
 
 
@@ -35,7 +36,7 @@ class CompanionCommand:
 class CompanionServer:
     """Authenticated local command inbox; it never executes actions itself."""
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 8765, token: str | None = None):
+    def __init__(self, host: str = "127.0.0.1", port: int = COMPANION_PORT, token: str | None = None):
         self.host = str(host)
         self.port = int(port)
         self.token = token or companion_token()
@@ -51,7 +52,7 @@ class CompanionServer:
         owner = self
 
         class Handler(BaseHTTPRequestHandler):
-            server_version = "JARVIS-V6-Companion"
+            server_version = APP_SLUG + "-Companion"
 
             def log_message(self, _format, *_args):
                 return
@@ -68,7 +69,7 @@ class CompanionServer:
             def do_GET(self):
                 if self.path != "/v1/status": self._json(404, {"error": "not_found"}); return
                 if not self._authorized(): self._json(401, {"error": "unauthorized"}); return
-                self._json(200, {"application": "JARVIS V6", "status": "ready",
+                self._json(200, {"application": APP_NAME, "status": "ready",
                                  "execution": "plan_then_execute"})
 
             def do_POST(self):

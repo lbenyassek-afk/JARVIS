@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
 
 from core.commands import handle_memory_command
+from core.identity import APP_NAME, CREATOR, VERSION
 from core.capabilities import snapshot as capability_snapshot
 from core.desktop_intent import parse as parse_desktop_command
 from core.config import load_config, save_config
@@ -847,7 +848,7 @@ class ApiKeyDialog(QDialog):
 class CapabilitiesDialog(QDialog):
     def __init__(self, registry, parent=None):
         super().__init__(parent); self.registry = registry
-        self.setWindowTitle("JARVIS V6 // CAPABILITIES")
+        self.setWindowTitle(APP_NAME + " // CAPABILITIES")
         self.resize(760, 620)
         layout = QVBoxLayout(self)
         title = QLabel("SYSTEM CAPABILITIES"); title.setObjectName("section"); layout.addWidget(title)
@@ -1606,7 +1607,7 @@ class MainWindow(QMainWindow):
         self.registry = Registry(); self.registry.discover(__import__('pathlib').Path(__file__).resolve().parent.parent / "skills")
         self.task_executor = TaskExecutor(self.registry)
         self.global_hotkey = None
-        self.setWindowTitle("JARVIS V6 // Created by Reda Benyassek")
+        self.setWindowTitle(f"{APP_NAME} // Created by {CREATOR}")
         self.resize(1240, 800); self.setMinimumSize(920, 640)
         self.setStyleSheet(self._style())
         self._build(); self._start_timers(); self._install_emergency_stop(); self._install_productivity_shortcuts()
@@ -1621,7 +1622,7 @@ class MainWindow(QMainWindow):
         creator = QLabel("PERSONAL INTELLIGENCE  /  REDA BENYASSEK"); creator.setObjectName("creator")
         self.clock = QLabel(); self.clock.setObjectName("clock")
         self.status = QLabel("● ONLINE"); self.status.setObjectName("online")
-        engine = QLabel("ADAPTIVE CORE  /  V6.0.0"); engine.setObjectName("engine")
+        engine = QLabel(f"ADAPTIVE CORE  /  V{VERSION}"); engine.setObjectName("engine")
         self.context_selector = QComboBox()
         for label, value in (("PERSONAL", "personal"), ("SCHOOL", "school"), ("BUSINESS", "business")):
             self.context_selector.addItem(label, value)
@@ -2374,8 +2375,8 @@ class MainWindow(QMainWindow):
     def open_about(self):
         QMessageBox.about(
             self,
-            "About JARVIS V6",
-            "<h2>JARVIS V6</h2>"
+            f"About {APP_NAME}",
+            f"<h2>{APP_NAME}</h2>"
             "<p>Futuristic desktop intelligence and task-control system.</p>"
             "<p><b>Created by Reda Benyassek</b></p>"
             "<p>Copyright © 2026 Reda Benyassek. All rights reserved.</p>",

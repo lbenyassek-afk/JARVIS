@@ -1,13 +1,40 @@
-# JARVIS V6
+# JARVIS V8
 
 **Created by Reda Benyassek**  
 Copyright © 2026 Reda Benyassek.
 
-JARVIS V6 is the next-generation Windows personal intelligence built from the
-tested V5.3 codebase. V6 has an independent application profile, encrypted
-memory, credentials, executable, installer, update channel and prerelease track.
+JARVIS V8 is a native PyQt6 Windows personal assistant built on the tested V7
+foundation. It has its own application profile, encrypted memory, credentials,
+executable, installer, update channel and companion port, so it installs and
+runs beside V6/V7 without reading or overwriting their data.
 
-## V6 target
+## V8 identity
+
+| Item | V8 value |
+|---|---|
+| Application / version | JARVIS V8 8.0.0 |
+| Executable | `JARVIS V8.exe` |
+| Install directory | `%LOCALAPPDATA%\Programs\JARVIS V8` |
+| Shortcuts | Desktop, Start menu and Startup `JARVIS V8.lnk` |
+| Installer | `JARVIS-V8-Setup.exe`, AppId `{8E5A1C47-3D2B-4F60-9A8E-0C8D2F7B8008}` |
+| Profile / config | `%APPDATA%\JARVIS-V8\config.json` |
+| Credential Manager | service `JARVIS-V8` |
+| Encryption key | new key in `JARVIS-V8` Credential Manager (fallback `%APPDATA%\JARVIS-V8\.memory.key`) |
+| Backups | `*.j8backup`, header `JARVIS8-BACKUP` |
+| Updates | `lbenyassek-afk/JARVIS` releases |
+| Companion port | `127.0.0.1:8768` (V6/V7 use 8765) |
+
+All values live in `core/identity.py`; `tests/test_v8_identity.py` fails if
+the installer, version resource, workflow or code drift from it or collide
+with an earlier generation.
+
+**Migration:** V8 never reads V6/V7 profiles automatically. No import tool
+exists yet. A future import must be explicit, show what it will copy, and
+re-encrypt with the V8 key.
+
+## Inherited V7 foundation
+
+### V6/V7 target
 
 - Minimal cinematic HUD with responsive natural voice.
 - Gemini intelligence with a useful local core and provider-ready architecture.
@@ -18,7 +45,7 @@ memory, credentials, executable, installer, update channel and prerelease track.
 - Verified research and unified School, Personal and Business workspaces.
 - Secure plugin manifests and an authenticated companion transport for iPhone.
 
-## Alpha 1 foundation
+### V7 foundation features
 
 - Original V6 satin-titanium J-reactor icon with arctic-blue energy, transparent
   edges and ten Windows sizes from 16 to 256 pixels.
@@ -64,8 +91,6 @@ memory, credentials, executable, installer, update channel and prerelease track.
   named Windows controls, window focus and layout, clipboard, fixed shortcuts,
   pointer actions, scrolling, media, screenshots and waits. Sensitive actions
   still require explicit approval.
-- Independent `%APPDATA%\JARVIS-V6` profile and `JARVIS-V6` Credential Manager service.
-- Separate `JARVIS V6.exe`, installer identity and prerelease workflow.
 - Local offline core for time, date, status, local memory search and capability help.
 - Structured execution-plan validation against the desktop action allowlist.
 - Complete mission preflight before the first side effect, dependency-aware
@@ -83,7 +108,7 @@ memory, credentials, executable, installer, update channel and prerelease track.
 - Authenticated local companion command inbox. It queues commands for the main
   permission system and never executes desktop actions by itself.
 
-Alpha builds are development previews. Stable V6 will ship only after Windows
+Alpha builds are development previews. A stable release will ship only after Windows
 hardware, clean-install, migration, voice, Gemini, recovery, performance and
 desktop-control acceptance tests pass.
 
@@ -91,7 +116,7 @@ desktop-control acceptance tests pass.
 
 Run `python -m unittest discover -s tests -v`, `python benchmark.py`, then
 `python main.py`.
-Windows packaging is handled by `.github/workflows/build-jarvis-v6.yml`.
+Windows packaging is handled by `.github/workflows/build-jarvis-v8.yml`.
 
 See [V7_PRODUCT_MAP.md](V7_PRODUCT_MAP.md) for the visual architecture, current
 evidence, release gates and the recommended V7 sequence.
