@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import sqlite3
 
+from .db import managed
+
 from .config import APP_DIR
 from .crypto import open_text, seal
 
 
-def _connect() -> sqlite3.Connection:
+def _open() -> sqlite3.Connection:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     database = sqlite3.connect(APP_DIR / "desktop_audit.sqlite3")
     database.execute(
@@ -16,6 +18,11 @@ def _connect() -> sqlite3.Connection:
     )
     return database
 
+
+
+def _connect():
+    """Open, commit/rollback and always close (see core/db.py)."""
+    return managed(_open)
 
 def record(action: str, detail: str, status: str) -> None:
     try:

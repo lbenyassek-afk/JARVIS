@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import sqlite3
 
+from .db import managed
+
 from . import config
 from .memory import sensitive
 from .crypto import open_text, seal, encrypted
 from .retrieval import relevance
 
 
-def _connect() -> sqlite3.Connection:
+def _open() -> sqlite3.Connection:
     config.APP_DIR.mkdir(parents=True, exist_ok=True)
     database = sqlite3.connect(config.APP_DIR / "conversation.sqlite3")
     database.execute(
@@ -24,6 +26,11 @@ def _connect() -> sqlite3.Connection:
         database.execute("UPDATE messages SET content=? WHERE id=?", (seal(content), row_id))
     return database
 
+
+
+def _connect():
+    """Open, commit/rollback and always close (see core/db.py)."""
+    return managed(_open)
 
 def _scope() -> str:
     value = str(config.load_config().get("assistant", {}).get("active_mode", "personal"))

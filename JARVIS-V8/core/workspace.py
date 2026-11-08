@@ -1,16 +1,22 @@
 """Local versioned workspace persistence; no external synchronization."""
 import sqlite3
+from .db import managed
 from . import config
 from .memory import sensitive
 from .crypto import open_text, seal
 
 APP_DIR = config.APP_DIR
 
-def connect():
+def _open():
     APP_DIR.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(APP_DIR / 'workspace.sqlite3')
     db.execute('CREATE TABLE IF NOT EXISTS records (id INTEGER PRIMARY KEY, category TEXT, title TEXT, body TEXT, updated TEXT DEFAULT CURRENT_TIMESTAMP)')
     return db
+
+
+def connect():
+    """Open, commit/rollback and always close (see core/db.py)."""
+    return managed(_open)
 
 def save(category, title, body):
     if sensitive(title, body):

@@ -79,12 +79,13 @@ Not implemented in this tier:
 
 | Check | Result | Where |
 |---|---|---|
-| Unit + integration tests | **100/100 pass** (68 inherited + 32 new) | Linux, Python 3.13, PyQt6 6.12, `QT_QPA_PLATFORM=offscreen` |
+| Unit + integration tests | **101/101 pass** (68 inherited + 33 new) | Linux, Python 3.13, PyQt6 6.12, `QT_QPA_PLATFORM=offscreen` |
 | Reliability benchmark | **8/8 pass**, incl. Screen Guide bounded observation (~2 ms for a 6,000-node tree capped at 400) and grounding | `python benchmark.py` |
 | Dependency check | `pip check`: no broken requirements | same host |
 | UI smoke | Main window builds, GUIDE page opens and reports UIA unavailability on Linux. Offscreen screenshot reviewed. | `tests/test_v8_ui_smoke.py` |
 | Gemini Screen Guide request | **Mocked HTTP only**: payload shape, JSON schema, no tools, no memory writes, 429/network/empty-response messages. **No live API call made.** | `tests/test_screen_guide.py` |
 | Real Windows UIA | **Not run.** No Windows host was available. The UIA backend is exercised only through a fake tree. | — |
+| Windows CI (first push) | Run #1 failed: 7 inherited tests could not delete temp profiles because SQLite connections were never closed (`with sqlite3.connect()` does not close). Fixed in `core/db.py`; unclosed-connection warnings went from 35 to 0; regression test `tests/test_storage_handles.py`. | GitHub Actions |
 | Windows packaging / install | **Not run** locally. CI workflow `build-jarvis-v8.yml` runs tests, the benchmark, PyInstaller and Inno Setup on `windows-latest` when pushed. | GitHub Actions |
 
 Known platform limits:
