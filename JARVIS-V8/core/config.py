@@ -142,6 +142,13 @@ DEFAULTS = {
         "channel": "stable",
         "repository": identity.UPDATE_REPOSITORY,
     },
+    "screen_guide": {
+        # Read-only accessibility observation. "ask" shows an unchecked
+        # per-request sharing box; "never" keeps guidance on this PC.
+        "enabled": True,
+        "cloud_sharing": "ask",
+        "max_controls": 150,
+    },
     "privacy": {
         "store_audio": False,
         "store_transcripts": True,
@@ -219,7 +226,32 @@ def load_config() -> dict:
     if int(saved_interface.get("presence_profile_version", 0)) < 1:
         merged["interface"]["visual_mode"] = "orb"
         merged["interface"]["presence_profile_version"] = 1
+    merged["screen_guide"] = normalize_screen_guide(merged.get("screen_guide", {}))
     return merged
+
+
+SCREEN_GUIDE_SHARING = ("ask", "never")
+
+
+def normalize_screen_guide(value: dict) -> dict:
+    out = deepcopy(DEFAULTS["screen_guide"])
+    value = value if isinstance(value, dict) else {}
+    out["enabled"] = bool(value.get("enabled", out["enabled"]))
+    if value.get("cloud_sharing") in SCREEN_GUIDE_SHARING:
+        out["cloud_sharing"] = value["cloud_sharing"]
+    try:
+        out["max_controls"] = max(50, min(400, int(value.get("max_controls", out["max_controls"]))))
+    except (TypeError, ValueError):
+        pass
+    return out
+
+
+def reset_section(config: dict, section: str) -> dict:
+    """Return ``config`` with one section restored to its defaults."""
+    if section not in DEFAULTS:
+        raise KeyError(section)
+    config[section] = deepcopy(DEFAULTS[section])
+    return config
 
 
 def save_config(config: dict) -> None:

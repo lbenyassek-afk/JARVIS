@@ -24,7 +24,7 @@ from core.commands import handle_memory_command
 from core.identity import APP_NAME, CREATOR, VERSION
 from core.capabilities import snapshot as capability_snapshot
 from core.desktop_intent import parse as parse_desktop_command
-from core.config import load_config, save_config
+from core.config import DEFAULTS, load_config, save_config
 from core.conversation import delete_history, recent_messages
 from core.intent import is_weather_query, quick_reply, requested_location
 from core.local_core import respond as local_core_response
@@ -37,6 +37,7 @@ from core.session import VoiceSession
 from core.workspace import save as save_record
 from core.windows_automation import active_controls, split_target_text
 from ui.workspace import WorkspaceDialog
+from ui.screen_guide import ScreenGuidePage
 from core.instructions import load as load_instructions, save as save_instructions
 from core.memory import delete_all, delete_one, search, update as update_memory
 from core.manager_prompt import load as load_manager_prompt, restore_default as restore_manager_prompt, save as save_manager_prompt
@@ -1037,6 +1038,17 @@ class SettingsDialog(QDialog):
         self.chat_context.setValue(int(cfg["memory"].get("chat_context_messages", 24)))
         self.memory_budget = QSpinBox(); self.memory_budget.setRange(400, 6000); self.memory_budget.setSingleStep(200)
         self.memory_budget.setValue(int(cfg["memory"].get("prompt_budget", 1800)))
+        guide_cfg = cfg.get("screen_guide", {})
+        self.guide_enabled = QCheckBox("Allow read-only window inspection")
+        self.guide_enabled.setChecked(bool(guide_cfg.get("enabled", True)))
+        self.guide_sharing = QComboBox()
+        self.guide_sharing.addItem("Ask every request (unchecked by default)", "ask")
+        self.guide_sharing.addItem("Never share — local guidance only", "never")
+        self.guide_sharing.setCurrentIndex(max(0, self.guide_sharing.findData(guide_cfg.get("cloud_sharing", "ask"))))
+        self.guide_max_controls = QSpinBox(); self.guide_max_controls.setRange(50, 400)
+        self.guide_max_controls.setSingleStep(25); self.guide_max_controls.setValue(int(guide_cfg.get("max_controls", 150)))
+        self.guide_reset = QPushButton("RESET SCREEN GUIDE SETTINGS")
+        self.guide_reset.clicked.connect(self._reset_screen_guide)
         self.instructions = QPlainTextEdit(load_instructions()); self.instructions.setPlaceholderText(
             "Add your own working rules. Never put API keys or passwords here.")
         self.instructions.setMinimumHeight(110)
@@ -1067,6 +1079,10 @@ class SettingsDialog(QDialog):
             ("Verify desktop results", self.verify_results),
             ("Safe verification retries", self.verification_retries),
             ("Execution profile", self.execution_profile),
+            ("Screen Guide", self.guide_enabled),
+            ("Screen Guide cloud sharing", self.guide_sharing),
+            ("Screen Guide control limit", self.guide_max_controls),
+            ("Screen Guide defaults", self.guide_reset),
             ("Colour theme", self.appearance),
             ("Custom accent", self.accent_color),
             ("Appearance preview", self.appearance_preview),
@@ -1090,6 +1106,12 @@ class SettingsDialog(QDialog):
         ): form.addRow(label, widget)
         self.save_button = QPushButton("SAVE SETTINGS"); self.save_button.setObjectName("primary")
         self.save_button.clicked.connect(self._save); form.addRow(self.save_button)
+
+    def _reset_screen_guide(self):
+        defaults = DEFAULTS["screen_guide"]
+        self.guide_enabled.setChecked(defaults["enabled"])
+        self.guide_sharing.setCurrentIndex(max(0, self.guide_sharing.findData(defaults["cloud_sharing"])))
+        self.guide_max_controls.setValue(defaults["max_controls"])
 
     def _manage_key(self):
         dialog = ApiKeyDialog(self)
@@ -1148,6 +1170,11 @@ class SettingsDialog(QDialog):
         cfg["desktop"]["verification_retries"] = self.verification_retries.value()
         cfg["desktop"]["isolation_profile"] = self.execution_profile.currentData()
         cfg["permissions"]["low_risk"] = "automatic" if self.automatic_actions.isChecked() else "ask"
+        cfg["screen_guide"] = {
+            "enabled": self.guide_enabled.isChecked(),
+            "cloud_sharing": self.guide_sharing.currentData(),
+            "max_controls": self.guide_max_controls.value(),
+        }
         cfg["interface"]["appearance_profile"] = self.appearance.currentData()
         cfg["interface"]["accent_color"] = custom_accent
         cfg["interface"]["appearance_profile_version"] = 1
@@ -1645,7 +1672,7 @@ class MainWindow(QMainWindow):
         rail_layout = QVBoxLayout(rail); rail_layout.setContentsMargins(10, 14, 10, 14); rail_layout.setSpacing(7)
         rail_mark = QLabel("J / 04"); rail_mark.setObjectName("railMark"); rail_layout.addWidget(rail_mark)
         rail_layout.addSpacing(12)
-        for label in ('Home', 'Today', 'Desktop', 'Projects', 'Life', 'Research', 'Plugins'):
+        for label in ('Home', 'Today', 'Desktop', 'Guide', 'Projects', 'Life', 'Research', 'Plugins'):
             button = QPushButton(label.upper()); button.setObjectName("railButton")
             button.clicked.connect(lambda checked=False, name=label: self.navigate(name)); rail_layout.addWidget(button)
         rail_layout.addStretch()
@@ -1679,6 +1706,7 @@ class MainWindow(QMainWindow):
         input_row.addWidget(self.input, 1); input_row.addWidget(self.mic); input_row.addWidget(send); rv.addLayout(input_row)
         self.workspace_stack.addWidget(chat_page)
         self.desktop_page = self._build_desktop_page(); self.workspace_stack.addWidget(self.desktop_page)
+        self.screen_guide_page = ScreenGuidePage(self); self.workspace_stack.addWidget(self.screen_guide_page)
         body.addWidget(workspace, 1)
 
         focus = self._panel(); self.focus_panel = focus; focus.setObjectName("presencePanel")
@@ -1732,12 +1760,19 @@ class MainWindow(QMainWindow):
         if name == 'Home': self.workspace_stack.setCurrentIndex(0); self.set_chat_mode('auto')
         elif name == 'Today': self.open_today()
         elif name == 'Desktop': self.workspace_stack.setCurrentIndex(1); self._refresh_desktop_context()
+        elif name == 'Guide': self.open_screen_guide()
         elif name == 'Voice': self.toggle_recording()
         elif name == 'Plugins': self.open_plugins()
         elif name in ('Projects', 'Life') and not plugin_enabled('project_manager'):
             QMessageBox.information(self, "Plugin disabled", "Enable Project & Life Manager in PLUGINS first.")
         elif name == 'Life': WorkspaceDialog('Life', self).exec()
         else: WorkspaceDialog(name,self).exec()
+
+    def open_screen_guide(self):
+        self.workspace_stack.setCurrentWidget(self.screen_guide_page)
+        self.screen_guide_page.apply_settings()
+        if self.screen_guide_page.window_selector.count() == 0:
+            self.screen_guide_page.refresh_windows()
 
     def _build_desktop_page(self):
         page = QWidget(); layout = QVBoxLayout(page)
@@ -2357,6 +2392,7 @@ class MainWindow(QMainWindow):
         self.set_presence_mode(cfg["interface"].get("visual_mode", "orb"), persist=False)
         self.apply_appearance(cfg["interface"])
         self._refresh_pillars()
+        self.screen_guide_page.apply_settings()
         self.append("SYSTEM", "Configuration secured and active.")
         self._sync_always_listener()
 
@@ -2565,6 +2601,8 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         self._save_recovery(clean_exit=True)
+        if hasattr(self, 'screen_guide_page'):
+            self.screen_guide_page.shutdown()
         self._stop_always_listener()
         for listener in list(self.retired_listeners):
             listener.stop(); listener.wait(600)
@@ -2626,6 +2664,11 @@ class MainWindow(QMainWindow):
         #dataLabel {{ color:#89929B; font-family:Consolas; font-size:8px; }}
         #dataValue {{ color:#EDF1F4; font-family:Consolas; font-size:10px; font-weight:700; }}
         #chat {{ background:rgba(3,3,3,215); border:1px solid rgba(255,255,255,24); border-radius:7px; padding:20px; font-size:14px; }}
+        QCheckBox::indicator {{ width:15px; height:15px; border:1px solid {muted}; border-radius:3px; background:rgba(255,255,255,8); }}
+        QCheckBox::indicator:checked {{ background:{accent}; border:1px solid {accent}; }}
+        QCheckBox::indicator:disabled {{ border:1px solid rgba(255,255,255,30); background:transparent; }}
+        QTreeWidget {{ background:{surface}; border:1px solid rgba(255,255,255,38); border-radius:7px; color:{text_color}; selection-background-color:{accent_dark}; }}
+        QHeaderView::section {{ background:rgba(255,255,255,9); color:{muted}; border:none; padding:5px 8px; font-family:Consolas; font-size:10px; }}
         QLineEdit, QPlainTextEdit, QComboBox, QListWidget {{ background:{surface}; border:1px solid rgba(255,255,255,38); border-radius:7px; padding:10px; color:{text_color}; selection-background-color:{accent_dark}; }}
         QLineEdit:focus, QPlainTextEdit:focus, QComboBox:focus {{ border:1px solid {accent}; }}
         QPushButton {{ min-height:20px; background:rgba(255,255,255,7); color:#C9C6BE; border:1px solid rgba(255,255,255,35); border-radius:7px; padding:9px 14px; font-family:Consolas; font-weight:650; letter-spacing:1px; }}

@@ -44,6 +44,14 @@ def snapshot(registry=None) -> list[dict]:
          "detail": "/desktop control with structured planning" if gemini_ready else "Connect Gemini for multi-step planning"},
         {"id": "app_aware_desktop", "state": "ready" if app_aware_ready else "unavailable",
          "detail": "Named Windows controls and fields" if app_aware_ready else "Requires the Windows application build"},
+        {"id": "screen_guide",
+         "state": ("disabled" if not cfg.get("screen_guide", {}).get("enabled", True) else
+                   "ready" if sys.platform == "win32" and importlib.util.find_spec("pywinauto") is not None
+                   else "unavailable"),
+         "detail": "Read-only Windows accessibility inspection with grounded local or Gemini guidance"
+                   if sys.platform == "win32" else "Requires Windows UI Automation"},
+        {"id": "screen_vision", "state": "future",
+         "detail": "Screenshot/OCR/vision capture not implemented; Screen Guide sees accessibility text only"},
         {"id": "desktop_routines", "state": "ready", "detail": "Encrypted reusable reviewed missions"},
         {"id": "verified_execution", "state": "ready",
          "detail": "Postcondition contracts, bounded retries and encrypted mission checkpoints"},

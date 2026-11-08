@@ -391,6 +391,50 @@ class LLMClient:
         # The existing planner performs the final action/value allowlist check.
         return (" ".join(str(data.get("goal") or goal).split())[:300], steps)
 
+    def screen_guidance(self, instruction: str, request_text: str, schema: dict) -> tuple[str, str]:
+        """Ask Gemini for Screen Guide steps. Returns (raw JSON text, provider name).
+
+        The caller is responsible for obtaining explicit sharing consent. Nothing
+        from this request is written to conversation history or memory.
+        """
+        cfg = load_config()
+        provider = select_provider(cfg, "chat")
+        if provider.provider_id != "gemini":
+            raise LLMError(f"Screen Guide does not support the provider '{provider.name}' yet.")
+        key = get_secret("gemini_api_key")
+        if not key:
+            raise LLMError("Connect Gemini to use AI guidance, or turn off sharing for local guidance.")
+        model = _supported_model(cfg["llm"].get("fast_model", "gemini-3.5-flash-lite"))
+        payload = {
+            "system_instruction": {"parts": [{"text": instruction}]},
+            "contents": [{"role": "user", "parts": [{"text": str(request_text)[:60_000]}]}],
+            "generationConfig": {
+                "temperature": 0.1,
+                "maxOutputTokens": 1200,
+                "responseMimeType": "application/json",
+                "responseSchema": schema,
+            },
+        }
+        try:
+            response = self._post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                params={"key": key}, json=payload, timeout=(8, 45),
+            )
+        except requests.Timeout as exc:
+            raise LLMError("Screen Guide timed out waiting for Gemini. Try again.") from exc
+        except requests.RequestException as exc:
+            raise LLMError(_network_error(exc)) from exc
+        if response.status_code >= 400:
+            raise _gemini_rejection(response, "screen guidance")
+        try:
+            candidate = response.json()["candidates"][0]
+            raw = "".join(part.get("text", "") for part in candidate["content"]["parts"])
+        except Exception as exc:
+            raise LLMError("Gemini returned an empty Screen Guide answer.") from exc
+        if not raw.strip():
+            raise LLMError("Gemini returned an empty Screen Guide answer.")
+        return raw, provider.name
+
     def chat_audio(self, pcm_bytes: bytes, sample_rate: int, mode: str = "chat",
                    english_only: bool = False, require_wake: bool = False,
                    wake_phrase: str = "hey jarvis") -> dict:

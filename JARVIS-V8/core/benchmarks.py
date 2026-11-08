@@ -8,6 +8,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 
 from . import config
+from . import screen_guide as sg
 from .crypto import open_text, seal
 from .mission_graph import MissionGraph, MissionNode
 from .plugin_runtime import PluginOperation
@@ -79,10 +80,41 @@ def run_suite(write_report: bool = False) -> dict:
         assert contract.input_type == "object" and contract.operation_id == "create_task"
         return "Typed plugin operation contract constructed"
 
+    class _Tree:
+        def __init__(self, controls):
+            self.controls = controls
+
+        def list_windows(self):
+            return [sg.WindowInfo(1, "Benchmark window")]
+
+        def read_tree(self, handle, limit):
+            return sg.WindowInfo(1, "Benchmark window"), iter(self.controls)
+
+    def screen_observation():
+        controls = [sg.ControlInfo(f"Control {i}" if i % 3 else "", "Button", True, "", i % 8)
+                    for i in range(6_000)]
+        started = time.perf_counter()
+        obs = sg.observe(1, _Tree(controls), limit=400)
+        elapsed = (time.perf_counter() - started) * 1000
+        assert obs.truncated and len(obs.controls) == 400
+        assert elapsed < 250, f"observation took {elapsed:.1f} ms"
+        return f"6,000-node tree bounded to {len(obs.controls)} controls in {elapsed:.1f} ms"
+
+    def screen_grounding():
+        obs = sg.observe(1, _Tree([sg.ControlInfo(n, "MenuItem") for n in
+                                   ("File", "Save as", "Export", "Print", "Help")]))
+        steps = sg.ground([sg.GuidanceStep("a", "save as"), sg.GuidanceStep("b", "Export PDF"),
+                           sg.GuidanceStep("c", "Settings"), sg.GuidanceStep("d", "")], obs)
+        assert [s.grounded for s in steps] == [True, True, False, False]
+        assert steps[1].matched_control == "Export"
+        return "Observed controls grounded; unobserved and generic steps flagged"
+
     cases = [_case("Encrypted storage", encryption), _case("Mission dependency graph", graph),
              _case("Cycle rejection", cycle_guard), _case("Postcondition verification", postcondition),
              _case("Local related-memory retrieval", retrieval),
-             _case("Typed plugin contract", typed_contract)]
+             _case("Typed plugin contract", typed_contract),
+             _case("Screen Guide bounded observation", screen_observation),
+             _case("Screen Guide grounding", screen_grounding)]
     durations = [item.duration_ms for item in cases]
     report = {
         "schema": 1,
